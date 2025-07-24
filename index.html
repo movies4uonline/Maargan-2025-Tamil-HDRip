@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title></title>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 15px;
+      background-color: #f9f9f9;
+      
+    }
+
+    h1 {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    h2 {
+      text-align: center;
+      color: red;
+      font-size: 18px;
+      margin: 10px 0 10px;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #444;
+      margin: 10px 0 15px;
+    }
+
+    .author {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 15px;
+    }
+
+    .profile-box {
+      background: #003366;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .profile-pic-wrapper {
+      position: relative;
+      width: 45px;
+      height: 45px;
+    }
+
+    .profile-pic {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid #fff;
+    }
+
+    .badge {
+      position: absolute;
+      bottom: -3px;
+      right: -3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      padding: 0px;
+    }
+
+    .profile-info .glow-name {
+      color: #22c55e;
+      font-weight: bold;
+      animation: glow 1.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 5px #22c55e, 0 0 10px #16a34a;
+      }
+      to {
+        text-shadow: 0 0 15px #22c55e, 0 0 25px #16a34a;
+      }
+    }
+
+    .profile-info .time {
+      font-size: 13px;
+      color: #ccc;
+    }
+
+    .poster {
+      text-align: center;
+      margin: 15px 0;
+    }
+
+    .poster img {
+      width: 100%;
+      max-width: 360px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #222;
+    }
+
+    .section {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .section img {
+      width: 100%;
+      border-radius: 15px;
+      box-shadow: 0 0 10px #222;
+      margin-bottom: 10px;
+    }
+
+    a {
+      color: red;
+      text-decoration: underline;
+    }
+
+    .download-section h2 {
+      font-size: 18px;
+      font-weight: bold;
+      color: #facc15;
+      text-align: center;
+      margin: 30px 0 10px;
+    }
+
+    .download-item {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .download-title {
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .download-btn {
+      background-color: #16a34a;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.375rem;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .download-btn:hover {
+      background-color: #15803d;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .modal-content {
+      background: #1e293b;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .close {
+      color: white;
+      font-size: 1.25rem;
+      cursor: pointer;
+      float: right;
+    }
+
+    .modal-content a {
+      display: block;
+      margin-top: 1rem;
+      background: #16a34a;
+      padding: 0.75rem;
+      border-radius: 0.375rem;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .modal-content a:hover {
+      background: #15803d;
+    }
+
+  </style>
+
+  <script>
+  function timeAgo(dateString) {
+    const now = new Date();
+    const posted = new Date(dateString);
+    const seconds = Math.floor((now - posted) / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (seconds < 60) return "Just now";
+    if (minutes < 60) return minutes + " minutes ago";
+    if (hours < 24) return hours + " hours ago";
+    if (days === 1) return "Yesterday";
+    return days + " days ago";
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const postTime1 = document.getElementById('post-time-1');
+    const postTime2 = document.getElementById('post-time-2');
+    const timeValue = postTime1.getAttribute('data-time');
+
+    const formattedTime = "Posted " + timeAgo(timeValue);
+
+    postTime1.textContent = formattedTime;
+    postTime2.textContent = formattedTime;
+  });
+    function openModal(id) {
+      document.getElementById(id).style.display = 'flex';
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+  </script>
+</head>
+<body>
+
+  <h1>📌 Maargan (2025) Tamil TRUE WEB-DL - [1080p & 720p - AVC / HEVC - (DD+5.1 - 640Kbps) - 2.6GB - 1.4GB & 850MB] - [x264 - 700MB - 400MB] - ESub</h1>
+  <hr />
+
+<div class="author">By <strong>MᴀᴍɪᴛʜA</strong> • <span id="post-time-1" data-time="2025-07-25T01:50:00+05:30">Posted just now</span> in WEB-HD / BluRay</div>
+
+  <div class="profile-box">
+    <div class="profile-pic-wrapper">
+      <img src="https://i.ibb.co/dJk7r4K7/IMG-20250619-230249-339.jpg" class="profile-pic" alt="Profile Picture" />
+      <img src="https://i.ibb.co/6JR6sYcy/14-Grand-Master.png" class="badge" alt="Crown Badge" />
+    </div>
+    <div class="profile-info">
+      <div class="glow-name">MᴀᴍɪᴛʜA 🧚‍♂</div>
+      <div class="time" id="post-time-2" data-time="2025-07-25T01:50:00+05:30">Posted just now</div>
+    </div>
+  </div>
+
+  <div class="poster">
+    <img src="https://image.tmdb.org/t/p/original/sgNetedu19Ar9LkUXGNheh9NL1D.jpg" alt="Pariwar Poster" />
+  </div>
+
+  <h2>📸 SCREEN SHOTS 📸</h2>
+
+  <div class="section">
+    <img src="https://i.ibb.co/YFKmz8k5/Picsart-25-07-25-01-36-08-503.jpg" />
+    <img src="https://i.ibb.co/rCgkdFr/Picsart-25-07-25-01-36-33-673.jpg" />
+    <img src="https://i.ibb.co/WXwyw1D/Picsart-25-07-25-01-37-01-116.jpg" />
+    <img src="https://i.ibb.co/20840Dhf/Picsart-25-07-25-01-37-25-330.jpg" />
+  </div>
+
+  <div class="section">
+    <p><strong>Movies4U Official Telegram Channel:</strong> 
+    <a href="https://t.me/movies4utop24" target="_blank"><strong>Click Here</strong></a></p>
+  </div>
+
+  <div class="section">
+    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjAe3Va5mMwmfU_aDIbIDkZpgHuz-5yObvLcpOPqEVey_s7qlPK4dyttIXWavtWlwh1mM8GPzG2Nezfk4O02tyNYQZxQRlWqH5L3r1E3jq5xVR9AaD8DJHEvqTLTZf9DgnpjI2AgCgBaP3ZI6mpWvorOdKEQw74RINrIxR3cbWURltyrBh02eeE4sbvfuU/s1600/torrborder.gif.a36a064cf6ccdffab1019892c8caca2d%20%282%29.gif"
+         alt="Animated Divider" style="width: 100%; max-width: 600px;" />
+  </div>
+
+  <div class="download-section">
+    
+   
+   
+    
+    
+    
+    <div class="download-item">
+      <div class="download-title">Maargan (2025) Tamil TRUE WEB-DL - 1080p - AVC - UNTOUCHED - (DD+5.1 - 640Kbps & AAC 2.0) - 2.4GB - ESub</div>
+      <button class="download-btn" onclick="openModal('modal6')">Download</button>
+    </div>
+    
+   <div class="download-item">
+      <div class="download-title">Maargan (2025) Tamil HQ HDRip - 1080p - HEVC - x265 - (DD+5.1 - 192Kbps & AAC 2.0) - 1.7GB - ESub</div>
+      <button class="download-btn" onclick="openModal('modal5')">Download</button>
+    </div>
+    
+    <div class="download-item">
+      <div class="download-title">Maargan (2025) Tamil HQ HDRip - 720p - x264 - (DD+5.1 - 192Kbps & AAC 2.0) - 1.4GB - ESub</div>
+      <button class="download-btn" onclick="openModal('modal4')">Download</button>
+    </div>
+    
+    <div class="download-item">
+      <div class="download-title">Maargan (2025) Tamil HQ HDRip - 720p - HEVC - x265 - (DD+5.1 - 192Kbps & AAC 2.0) - 1GB - ESub</div>
+      <button class="download-btn" onclick="openModal('modal3')">Download</button>
+    </div>
+    
+    <div class="download-item">
+      <div class="download-title">Maargan (2025) Tamil HQ HDRip - x264 - AAC - 700MB - ESub</div>
+      <button class="download-btn" onclick="openModal('modal2')">Download</button>
+    </div>
+    
+    <div class="download-item">
+      <div class="download-title">Maargan (2025) Tamil HQ HDRip - x264 - AAC - 400MB - ESub</div>
+      <button class="download-btn" onclick="openModal('modal1')">Download</button>
+    </div>
+  </div>
+
+
+
+
+
+
+<div id="modal6" class="modal" onclick="closeModal('modal6')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <span class="close" onclick="closeModal('modal6')">×</span>
+      <h3>Choose Server</h3>
+      <a href="https://stream.movies4uu.workers.dev/dl/6882946ee288ad3ceaeea15b">Server 1</a>
+      <a href="">Server 2</a>
+      <a href="#">Server 3</a>
+    </div>
+  </div>
+
+ <div id="modal5" class="modal" onclick="closeModal('modal5')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <span class="close" onclick="closeModal('modal5')">×</span>
+      <h3>Choose Server</h3>
+      <a href="https://stream.movies4uu.workers.dev/dl/6882915ce288ad3ceaeea15a">Server 1</a>
+      <a href="">Server 2</a>
+      <a href="https://streamtape.com/v/KyKvya3dAViD6B/Maargan_%282025%29_Tamil_HQ_HDRip_-_1080p_-_HEVC_-_x265_-_%28DD_5..mkv">Server 3</a>
+    </div>
+  </div>
+  
+  <div id="modal4" class="modal" onclick="closeModal('modal4')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <span class="close" onclick="closeModal('modal4')">×</span>
+      <h3>Choose Server</h3>
+      <a href="https://stream.movies4uu.workers.dev/dl/68828aa9e288ad3ceaeea156">Server 1</a>
+      <a href="">Server 2</a>
+      <a href="https://streamtape.com/v/VmLwOm6LkMhKvoR/Maargan_%282025%29_Tamil_HQ_HDRip_-_720p_-_x264_-_%28DD_5.1_-_192K.mkv">Server 3</a>
+    </div>
+  </div>
+
+  <div id="modal3" class="modal" onclick="closeModal('modal3')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <span class="close" onclick="closeModal('modal3')">×</span>
+      <h3>Choose Server</h3>
+      <a href="https://stream.movies4uu.workers.dev/dl/68828d74e288ad3ceaeea157">Server 1</a>
+      <a href="">Server 2</a>
+      <a href="https://streamtape.com/v/W1grwlOPvguQe1/Maargan_%282025%29_Tamil_HQ_HDRip_-_720p_-_HEVC_-_x265_-_%28DD_5.1.mkv">Server 3</a>
+    </div>
+  </div>
+  
+  <div id="modal2" class="modal" onclick="closeModal('modal2')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <span class="close" onclick="closeModal('modal2')">×</span>
+      <h3>Choose Server</h3>
+      <a href="https://stream.movies4uu.workers.dev/dl/6882900fe288ad3ceaeea159">Server 1</a>
+      <a href="">Server 2</a>
+      <a href="https://streamtape.com/v/Xo6Begrkm0UZVo/Maargan_%282025%29_Tamil_HQ_HDRip_-_x264_-_AAC_-_700MB_-_ESub.mkv">Server 3</a>
+    </div>
+  </div>
+  
+  <div id="modal1" class="modal" onclick="closeModal('modal1')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <span class="close" onclick="closeModal('modal1')">×</span>
+      <h3>Choose Server</h3>
+      <a href="https://stream.movies4uu.workers.dev/dl/68828ecee288ad3ceaeea158">Server 1</a>
+      <a href="">Server 2</a>
+      <a href="https://streamtape.com/v/WGyOv0j72RHbjZo/Maargan_%282025%29_Tamil_HQ_HDRip_-_x264_-_AAC_-_400MB_-_ESub.mkv">Server 3</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjAe3Va5mMwmfU_aDIbIDkZpgHuz-5yObvLcpOPqEVey_s7qlPK4dyttIXWavtWlwh1mM8GPzG2Nezfk4O02tyNYQZxQRlWqH5L3r1E3jq5xVR9AaD8DJHEvqTLTZf9DgnpjI2AgCgBaP3ZI6mpWvorOdKEQw74RINrIxR3cbWURltyrBh02eeE4sbvfuU/s1600/torrborder.gif.a36a064cf6ccdffab1019892c8caca2d%20%282%29.gif"
+         alt="Divider" style="width: 100%; max-width: 600px; margin-bottom: 30px; margin-top: 20px;" />
+  </div>
+
+
+<!-- 🔽 Comment Section -->
+  <div id="comment-box" style="max-width:400px;margin:auto;padding:10px;background:#fff;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,0.1);">
+    <h3 style="text-align:center;color:#111;">💬 Leave a Comment</h3>
+    <textarea id="commentInput" placeholder="Type your comment..." style="width:270px;padding:10px;border:1px solid #ccc;border-radius:6px;min-height:80px;margin-bottom:10px;"></textarea>
+    <button onclick="postComment()" style="background:#16a34a;color:#fff;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;font-weight:bold;">
+      Post Comment
+    </button>
+    <hr style="margin:20px 0;" />
+    <div id="commentsList"></div>
+  </div>
+
+  <!-- Firebase Config -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyATnh4h9eC7aUOF4gge7iHhC8yo3b0Z-6Q",
+      authDomain: "movies4u-comments25.firebaseapp.com",
+      projectId: "movies4u-comments25",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const postComment = () => {
+      const text = document.getElementById('commentInput').value.trim();
+      if (text === "") return alert("Please write something!");
+      db.collection("comments").add({
+        text,
+        created: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        document.getElementById('commentInput').value = "";
+      });
+    };
+
+    db.collection("comments").orderBy("created", "desc").onSnapshot(snapshot => {
+      const commentsDiv = document.getElementById("commentsList");
+      commentsDiv.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const date = data.created?.toDate().toLocaleString() || "Just now";
+        const div = document.createElement("div");
+        div.style = "margin-bottom:15px;padding:10px;background:#f3f4f6;border-radius:6px;border-left:4px solid #22c55e;";
+        div.innerHTML = `<p style="margin:0 0 5px;">${data.text}</p><small style="color:#666;">${date}</small>`;
+        commentsDiv.appendChild(div);
+      });
+    });
+  </script>
+
+<script type='text/javascript' src='//dozepokinganthem.com/29/99/aa/2999aa90e5d86f11b727ee915517276a.js'></script>
+
+
+  <!-- Protection Script (Safe for Ads) -->
+  <script>
+    // Disable right-click
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+
+    // Block common inspect shortcuts
+    document.addEventListener('keydown', function(e) {
+      if (
+        e.key === 'F12' || e.keyCode === 123 ||
+        (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+        (e.ctrlKey && e.key.toUpperCase() === 'U')
+      ) {
+        e.preventDefault();
+        return false;
+      }
+    });
+  </script>
+
+
+
+<!-- Footer Section -->
+<footer style="padding: 0px 0; text-align: center; margin-bottom: 0px; margin-top: 40px;">
+  <img src="https://i.ibb.co/0RH9hcjV/64f9c23fc99998f80e24f057cc59f689.png" alt="Telegram Icon and Copyright" style="width: 50px; margin-bottom: 5px;">
+  <p style="font-size: 14px; color: #555;">Copyright © 2019-2025. All Rights Reserved.<br>Powered by Invision Community</p>
+</footer>
+
+
+</body>
+</html>
